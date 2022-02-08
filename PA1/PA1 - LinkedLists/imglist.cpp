@@ -40,7 +40,8 @@ double HueDiff(double hue1, double hue2) {
 */
 ImgList::ImgList() {
   // set appropriate values for all member attributes here
-  
+  northwest = NULL;
+  southeast = NULL;  // necessary?
 }
 
 /*
@@ -50,6 +51,52 @@ ImgList::ImgList() {
 ImgList::ImgList(PNG& img) {
   // build the linked node structure and set the member attributes appropriately
   
+  // create 2D linked list and resize with respect to img
+  vector< vector<ImgNode* > > pngList;
+  pngList.resize(img.width(), vector<ImgNode* >(img.height()));
+
+  // create nodes
+  for (unsigned y=0; y<img.height(); y++) {
+    for (unsigned x=0; x<img.width(); x++) {
+      HSLAPixel* pixel = img.getPixel(x, y);
+      ImgNode* curr = new ImgNode();
+      curr->colour = *pixel; 
+      pngList[x][y] = curr;
+    }
+  }
+
+  // create pointers for nodes
+  for (unsigned y=0; y<img.height(); y++) {
+    for (unsigned x=0; x<img.width(); x++) {
+      if (x == 0) {
+        pngList[x][y]->west = NULL;
+      } else {
+        pngList[x][y]->west = pngList[x-1][y];
+      }
+      
+      if (x == img.width() - 1) {
+        pngList[x][y]->east = NULL;
+      } else {
+        pngList[x][y]->east = pngList[x+1][y];
+      }
+
+      if (y == 0) {
+        pngList[x][y]->north = NULL;
+      } else {
+        pngList[x][y]->north = pngList[x][y-1];
+      }
+
+      if (y == img.height() - 1) {
+        pngList[x][y]->south = NULL;
+      } else {
+        pngList[x][y]->south = pngList[x][y+1];
+      }
+    }
+  }
+
+  // assign northwest and southeast ImgNodes
+  northwest = pngList[0][0];
+  southeast = pngList[img.width()-1][img.height()-1];
 }
 
 /*
@@ -102,7 +149,24 @@ ImgList::~ImgList() {
 */
 unsigned int ImgList::GetDimensionX() const {
   // replace the following line with your implementation
-  return -1;
+  // check empty list
+  if (!northwest || !southeast) {
+    return 0;
+  }
+
+  // check list with one node
+  if (northwest == southeast) {
+    return 1;
+  }
+  
+  // iterate through east pointers
+  ImgNode* curr = northwest;
+  unsigned width = 0;
+  while (curr) {
+    width++;
+    curr = curr->east;
+  }
+  return width;
 }
 
 /*
@@ -115,7 +179,24 @@ unsigned int ImgList::GetDimensionX() const {
 */
 unsigned int ImgList::GetDimensionY() const {
   // replace the following line with your implementation
-  return -1;
+  // check empty list
+  if (!northwest || !southeast) {
+    return 0;
+  }
+
+  // check list with one node
+  if (northwest == southeast) {
+    return 1;
+  }
+
+  // iterate through south pointers
+  ImgNode* curr = northwest;
+  unsigned height = 0;
+  while (curr) {
+    height++;
+    curr = curr->south;
+  }
+  return height;
 }
 
 /*
@@ -127,7 +208,25 @@ unsigned int ImgList::GetDimensionY() const {
 */
 unsigned int ImgList::GetDimensionFullX() const {
   // replace the following line with your implementation
-  return -1;
+  // check empty list
+  if (!northwest || !southeast) {
+    return 0;
+  }
+
+  // check list with one node
+  if (northwest == southeast) {
+    return 1;
+  }
+
+  // iterate through width of list with skips
+  ImgNode* curr = northwest;
+  unsigned width = 0;
+  while (curr) {
+    unsigned toAdd = curr->skipright + 1;
+    width += toAdd;
+    curr = curr->east;
+  }
+  return width;
 }
 
 /*
@@ -151,8 +250,35 @@ unsigned int ImgList::GetDimensionFullX() const {
 */
 ImgNode* ImgList::SelectNode(ImgNode* rowstart, int selectionmode) {
   // add your implementation below
+  if (selectionmode == 0) {
+    // find node with minimum luminance across row (excluding start and end of row)
+    ImgNode* curr = rowstart->east;
+    ImgNode* minLum = curr;
+    while (curr->east) { 
+      if (curr->east->colour.l < curr->colour.l) {
+        minLum = curr->east;
+      }
+      curr = curr->east;
+    }
+    return minLum;
+  } 
   
-  return NULL;
+  else {
+    // find node with minimum total "hue difference" to neighbors (excluding start and end of row)
+    ImgNode* curr = rowstart->east;
+    ImgNode* leastDiffNode = curr;
+    double leastDiff = 360;
+    while (curr->east) {
+      double hueDiffLeft  = HueDiff(curr->west->colour.h, curr->colour.h);
+      double hueDiffRight = HueDiff(curr->colour.h, curr->east->colour.h);
+      if (hueDiffLeft + hueDiffRight < leastDiff) {
+        leastDiff = hueDiffLeft + hueDiffRight;
+        ImgNode* leasatDiffNode = curr;        
+      }
+      curr = curr->east;
+    }
+    return leastDiffNode;
+  }
 }
 
 /*
@@ -201,8 +327,29 @@ PNG ImgList::Render(bool fillgaps, int fillmode) const {
 *       the size of the gap.
 */
 void ImgList::Carve(int selectionmode) {
-  // add your implementation here
-  
+  ImgNode* rowstart = northwest;
+  while (rowstart) {
+    ImgNode* toDelete = SelectNode(rowstart, selectionmode);
+    toDelete->east->west = toDelete->west;
+    toDelete->east->skipleft = (toDelete->east->skipleft) + (toDelete->skipleft) + 1;
+
+    toDelete->west->east = toDelete->east;
+    toDelete->west->skipright = (toDelete->west->skipright) + (toDelete->skipright) + 1;
+
+    if (toDelete->north) {
+      toDelete->north->south = toDelete->south;
+      toDelete->north->skipdown = (toDelete->north->skipdown) + (toDelete->skipdown) + 1;
+    }
+
+    if (toDelete->south) {
+      toDelete->south->north = toDelete->north;
+      toDelete->south->skipup = (toDelete->south->skipup) + (toDelete->skipup) + 1;
+    }
+
+    delete toDelete;
+    toDelete = NULL;
+    rowstart = rowstart->south;
+  }
 }
 
 // note that a node on the boundary will never be selected for removal
@@ -233,7 +380,26 @@ void ImgList::Carve(unsigned int rounds, int selectionmode) {
 */
 void ImgList::Clear() {
   // add your implementation here
+  ImgNode* curr = northwest;
+  ImgNode* currRow = northwest;
   
+  // iterate through rows
+  while (currRow != NULL) {
+    // iterate through columns
+    while (curr != NULL) {
+      ImgNode* left = curr;
+      curr = left->east;  // get pointer to next element
+      delete left;
+      // left = NULL;
+    }
+
+    // advance current row to currRow + 1
+    currRow = currRow->south;
+    curr = currRow->south;
+  }
+
+  northwest = NULL;
+  southeast = NULL; 
 }
 
 /* ************************
