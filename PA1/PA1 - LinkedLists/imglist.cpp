@@ -72,9 +72,8 @@ ImgList::ImgList(PNG& img) {
       eastmost->colour = *img.getPixel(width - 1, 0);
     
       for (unsigned int x=1; x<width-1; x++) {
-        HSLAPixel* pixel = img.getPixel(x, 0);
         ImgNode* curr = new ImgNode();
-        curr->colour = *pixel;
+        curr->colour = *img.getPixel(x, 0);
         // Create east, west pointers
         curr->west = westmost;
         curr->east = eastmost;
@@ -96,8 +95,8 @@ ImgList::ImgList(PNG& img) {
       ImgNode* above = aboveRowStart->east;
       
       for (unsigned int x=1; x<width-1; x++) {
-        HSLAPixel* pixel = img.getPixel(x, y);
         ImgNode* curr = new ImgNode();
+        curr->colour = *img.getPixel(x, y);
         curr->west = westmost;
         curr->east = eastmost;
         westmost->east = curr;
@@ -115,54 +114,6 @@ ImgList::ImgList(PNG& img) {
   }
 
   southeast = aboveRowEnd;
-
-
-  // // create 2D linked list and resize with respect to img
-  // vector< vector<ImgNode* > > pngList;
-  // pngList.resize(img.width(), vector<ImgNode* >(img.height()));
-
-  // // create nodes
-  // for (unsigned y=0; y<img.height(); y++) {
-  //   for (unsigned x=0; x<img.width(); x++) {
-  //     HSLAPixel* pixel = img.getPixel(x, y);
-  //     ImgNode* curr = new ImgNode();
-  //     curr->colour = *pixel; 
-  //     pngList[x][y] = curr;
-  //   }
-  // }
-
-  // // create pointers for nodes
-  // for (unsigned y=0; y<img.height(); y++) {
-  //   for (unsigned x=0; x<img.width(); x++) {
-  //     if (x == 0) {
-  //       pngList[x][y]->west = NULL;
-  //     } else {
-  //       pngList[x][y]->west = pngList[x-1][y];
-  //     }
-      
-  //     if (x == img.width() - 1) {
-  //       pngList[x][y]->east = NULL;
-  //     } else {
-  //       pngList[x][y]->east = pngList[x+1][y];
-  //     }
-
-  //     if (y == 0) {
-  //       pngList[x][y]->north = NULL;
-  //     } else {
-  //       pngList[x][y]->north = pngList[x][y-1];
-  //     }
-
-  //     if (y == img.height() - 1) {
-  //       pngList[x][y]->south = NULL;
-  //     } else {
-  //       pngList[x][y]->south = pngList[x][y+1];
-  //     }
-  //   }
-  // }
-
-  // // assign northwest and southeast ImgNodes
-  // northwest = pngList[0][0];
-  // southeast = pngList[img.width()-1][img.height()-1];
 }
 
 /*
@@ -315,18 +266,20 @@ unsigned int ImgList::GetDimensionFullX() const {
 *      two pixels with hues 5 and 355 differ by 10.
 */
 ImgNode* ImgList::SelectNode(ImgNode* rowstart, int selectionmode) {
-  // add your implementation below
+  ImgNode* curr = rowstart->east;
+
   if (selectionmode == 0) {
     // find node with minimum luminance across row (excluding start and end of row)
-    ImgNode* curr = rowstart->east;
-    ImgNode* minLum = curr;
-    while (curr->east) { 
-      if (curr->east->colour.l < curr->colour.l) {
-        minLum = curr->east;
+    double minLum = curr->colour.l;
+    ImgNode* minLumNode = curr;
+    while (curr->east->east) { 
+      if (curr->east->colour.l < minLum) {
+        minLum = curr->east->colour.l;
+        minLumNode = curr->east;
       }
       curr = curr->east;
     }
-    return minLum;
+    return minLumNode;
   } 
   
   else {
@@ -334,14 +287,15 @@ ImgNode* ImgList::SelectNode(ImgNode* rowstart, int selectionmode) {
     ImgNode* curr = rowstart->east;
     ImgNode* leastDiffNode = curr;
     double leastDiff = 360;
-    while (curr->east) {
-      double hueDiffLeft  = HueDiff(curr->west->colour.h, curr->colour.h);
+    while (curr->east->east) {
+      curr = curr->east;
+      double hueDiffLeft  = HueDiff(curr->colour.h, curr->west->colour.h);
       double hueDiffRight = HueDiff(curr->colour.h, curr->east->colour.h);
+
       if (hueDiffLeft + hueDiffRight < leastDiff) {
         leastDiff = hueDiffLeft + hueDiffRight;
         leastDiffNode = curr;        
       }
-      curr = curr->east;
     }
     return leastDiffNode;
   }
@@ -371,7 +325,6 @@ ImgNode* ImgList::SelectNode(ImgNode* rowstart, int selectionmode) {
 *             and the smaller-valued average for diametric hues
 */
 PNG ImgList::Render(bool fillgaps, int fillmode) const {
-  // Add/complete your implementation below
   // Useful nodes
   ImgNode* curr = northwest;
   ImgNode* currRow = northwest;
@@ -492,6 +445,10 @@ void ImgList::Carve(int selectionmode) {
 
     delete toDelete;
     toDelete = NULL;
+    
+    if (!rowstart->south) {
+      return;
+    }
     rowstart = rowstart->south;
   }
 }
@@ -512,13 +469,13 @@ void ImgList::Carve(int selectionmode) {
 */
 void ImgList::Carve(unsigned int rounds, int selectionmode) {
   // add your implementation here
-  ImgNode* cantCarve = northwest->east->east;
-  while (cantCarve) {
-    for (unsigned r=0; r<rounds; r++) {
-      // carve out based on selectionmode from each row
-      Carve(selectionmode);
-    }
-  }
+  // ImgNode* cantCarve = northwest->east->east;
+  // while (cantCarve) {
+  //  for (unsigned r=0; r<rounds; r++) {
+  //    // carve out based on selectionmode from each row
+  //    Carve(selectionmode);
+  //  }
+  // }
   return;
 }
 
@@ -579,17 +536,25 @@ void ImgList::Copy(const ImgList& otherlist) {
 *************************************************************************************************/
 
 double ImgList::HueAvg(double hueWest, double hueEast) const{
-    double hueAvg = 0;
+    double hueAvg;
+    double minHue = fmin(hueWest, hueEast);
+    double maxHue = fmax(hueWest, hueEast);
     if (hueWest == 360) {
       hueWest = 0.0;
     }
     if (hueEast == 360) {
       hueEast = 0.0;
     }
-    if (hueWest + hueEast < 360) {
-        hueAvg = (hueWest + hueEast) / 2.0;
+    if (hueEast == hueWest) {
+      return hueEast;
+    }
+    if (maxHue - minHue == HueDiff(hueWest, hueEast)) {
+      hueAvg = (maxHue + minHue) / 2.0;
     } else {
-        hueAvg = (hueWest + hueEast - 360) / 2.0;
+      hueAvg = (HueDiff(hueWest, hueEast)) / 2.0 + maxHue - 360;
+      if (hueAvg < 0) {
+        hueAvg += 360;
+      }
     }
     return hueAvg;          
 }
