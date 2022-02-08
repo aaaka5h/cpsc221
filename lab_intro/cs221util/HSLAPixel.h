@@ -23,6 +23,7 @@ namespace cs221util {
     // default constructor
     HSLAPixel();
 
+    // alternative constructor
     HSLAPixel(double hue, double saturation, double luminance);
 
     HSLAPixel(double hue, double saturation, double luminance, double alpha);
