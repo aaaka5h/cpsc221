@@ -7,3 +7,10 @@ Completed labs and assignments from CPSC 221 Data Structures and Algorithms
 ### Lab-Debug: ###
 - Found and fixed bugs in sketchify.cpp (a program to trace the outline of a PNG)
 - Used gdb to debug
+
+### Lab-LinkedLists: ###
+- Implemented linked list methods
+
+### Programming Assignment 1 ###
+- Developed and used a 2D linked grid to manipulate pixels from a PNG
+- Managed dynamic memory in a large program with complicated code
