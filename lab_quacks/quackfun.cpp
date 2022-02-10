@@ -50,40 +50,33 @@ namespace QuackFun {
     template <typename T>
     void scramble(queue<T>& q) {
         stack<T> s;
-        unsigned int elems_left = q.size();
-        unsigned int block_size = 1;
-        bool even = block_size % 2 == 0;
-        if (block_size > elems_left) {
-            block_size = elems_left;
-        }
-        if (even) {
-            for (unsigned int i=0; i<block_size; i++) {
-                s.push(q.front());
-                q.pop();
-            }
-            for (unsigned int i=0; i<block_size; i++) {
-                q.push(s.top());
-                s.pop();
-            }
-        } else {
-            for (unsigned int i=0; i<block_size; i++) {
-                q.push(q.front());
-                q.pop();
-            }
-        }
-        elems_left -= block_size;
-        block_size++;
-    }
+        queue<T> res;
+        unsigned int blockSize = 1;
 
-        // while (!q.empty()) {
-        //     if (block % 2 == 0) {
-        //         for (unsigned int i=0; (i < block && !q.empty()); i++) {
-        //             T top = s.top();
-        //             q2.push(top);
-        //             s.push(top);
-        //         }
-        //     }
-        // }
+        while (!q.empty()) {
+            if (blockSize % 2 == 0) {  // even
+                for (unsigned int i=0; i<blockSize && !q.empty(); i++) {
+                    s.push(q.front());
+                    q.pop();
+                }
+                while (!s.empty()) {
+                    res.push(s.top());
+                    s.pop();
+                }
+            } else  {  // odd
+                for (unsigned int i=0; i<blockSize && !q.empty(); i++) {
+                    res.push(q.front());
+                    q.pop();
+                }
+            }
+            blockSize++;
+        }
+
+        while (!res.empty()) {
+            q.push(res.front());
+            res.pop();
+        }
+    }
 
     /**
      * @return true if the parameter stack and queue contain only elements of
