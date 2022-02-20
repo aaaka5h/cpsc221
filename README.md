@@ -1,6 +1,10 @@
 # cpsc221
 Completed labs and assignments from CPSC 221 Data Structures and Algorithms
 
+### Programming Assignment 1 ###
+- Developed and used a 2D linked grid to manipulate pixels from a PNG
+- Managed dynamic memory in a large program with complicated code
+
 ### Lab-Intro: ###
 - Manipulated PNG images using HSLAPixels
 
@@ -11,6 +15,6 @@ Completed labs and assignments from CPSC 221 Data Structures and Algorithms
 ### Lab-LinkedLists: ###
 - Implemented linked list methods
 
-### Programming Assignment 1 ###
-- Developed and used a 2D linked grid to manipulate pixels from a PNG
-- Managed dynamic memory in a large program with complicated code
+### Lab-Quacks ###
+- Practiced creating recursive functions
+- Created recursive and iterative functions to manipulate stacks and queues
