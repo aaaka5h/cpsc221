@@ -18,3 +18,7 @@ Completed labs and assignments from CPSC 221 Data Structures and Algorithms
 ### Lab-Quacks ###
 - Practiced creating recursive functions
 - Created recursive and iterative functions to manipulate stacks and queues
+
+### Lab-Trees ###
+- Manipulated binary trees
+- Utilized InOrder, PreOrder, and PostOrder traversals
