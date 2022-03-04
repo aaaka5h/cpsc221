@@ -3,7 +3,7 @@ Completed labs and assignments from CPSC 221 Data Structures and Algorithms
 
 ### Programming Assignment 1 ###
 - Developed and used a 2D linked grid to manipulate pixels from a PNG
-- Managed dynamic memory in a large program with complicated code
+- Managed dynamic memory in a large program with complex code
 
 ### Lab-Intro: ###
 - Manipulated PNG images using HSLAPixels
@@ -22,3 +22,7 @@ Completed labs and assignments from CPSC 221 Data Structures and Algorithms
 ### Lab-Trees ###
 - Manipulated binary trees
 - Utilized InOrder, PreOrder, and PostOrder traversals
+
+### Lab_Dict ###
+- Using memoization to optimize recursive functions
+- Implementing various functions to iterate through and manipulate large dictionaries
