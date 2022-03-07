@@ -15,6 +15,7 @@
 
 #include "priority.h"
 #include <assert.h>
+#include <cmath>
 
 using namespace cs221util;
 using namespace std;
@@ -25,7 +26,8 @@ using namespace std;
 */
 PriorityNeighbours::PriorityNeighbours() {
   // complete your implementation below
-  
+  refcolor = HSLAPixel();
+  //points = {};
 }
 
 /*
@@ -34,7 +36,8 @@ PriorityNeighbours::PriorityNeighbours() {
 */
 PriorityNeighbours::PriorityNeighbours(HSLAPixel ref) {
   // complete your implementation below
-  
+  refcolor = ref;
+  //points = {};
 }
 
 /*
@@ -44,7 +47,7 @@ PriorityNeighbours::PriorityNeighbours(HSLAPixel ref) {
 */
 void PriorityNeighbours::Insert(PixelPoint p) {
   // complete your implementation below
-  
+  points.push_back(p);
 }
 
 /*
@@ -69,9 +72,36 @@ void PriorityNeighbours::Insert(PixelPoint p) {
 *  priority order and/or accessing the priority element in this specific application!
 */
 PixelPoint PriorityNeighbours::Remove() {
-  // complete your implementation below
+  //cout << "got here!" << endl;
+  if (IsEmpty()) {
+    return NULL;
+  }
+
+  int size = points.size();
+  double mindiff = points.front().color.dist(refcolor);
+  int bestPointIndex = 0;
+
+  for (int i=1; i<size; i++) {
+    //cout << "mindiff is: " << mindiff << endl;
+    if (points[i].color.dist(refcolor) < mindiff) {
+      mindiff = points[i].color.dist(refcolor);
+      bestPointIndex = i;
+
+    } else if (points[i].color.dist(refcolor) == mindiff) {
+      if (points[i].y < points[bestPointIndex].y) {
+        bestPointIndex = i;
+      } else if (points[i].y == points[bestPointIndex].y) {
+        if (points[i].x < points[bestPointIndex].x) {
+          bestPointIndex = i;
+        }
+      }
+    }
+    //cout << "new mindiff is: " << mindiff << endl;
+  }
+  PixelPoint temp = points[bestPointIndex];
+  points.erase(points.begin() + bestPointIndex);
   
-  return PixelPoint(); // REPLACE THIS STUB
+  return temp;
 }
 
 /*
@@ -80,18 +110,14 @@ PixelPoint PriorityNeighbours::Remove() {
 *          false, otherwise
 */
 bool PriorityNeighbours::IsEmpty() const {
-  // complete your implementation below
-  
-  return true; // REPLACE THIS STUB
+  return (points.size() == 0); 
 }
 
 /*
 *  Returns the value of the reference color
 */
 HSLAPixel PriorityNeighbours::GetReferenceColor() const {
-  // complete your implementation below
-  
-  return HSLAPixel(); // REPLACE THIS STUB
+  return refcolor; 
 }
 
 /*
@@ -99,6 +125,5 @@ HSLAPixel PriorityNeighbours::GetReferenceColor() const {
 *  POST: refcolor is set to the supplied value
 */
 void PriorityNeighbours::SetReferenceColor(HSLAPixel ref) {
-  // complete your implementation below
-  
+  refcolor = ref;
 }
