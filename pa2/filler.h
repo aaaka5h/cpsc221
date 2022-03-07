@@ -66,6 +66,11 @@ namespace filler
   template <template <class T> class OrderingStructure> animation Fill(FillerConfig& config);
 
   // Add any helper functions here
+  bool is_unprocessed(vector<PixelPoint> pixelpoints, PixelPoint p);
+
+  void add_neighbors(int dx, int dy, PNG image, HSLAPixel seedColor, double tolerance, PixelPoint p, PriorityNeighbours neighbors);
+
+  void flood_pixel(ColorPicker* picker, PixelPoint p, PNG image);
 
 } // namespace filler
 
