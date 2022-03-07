@@ -11,10 +11,7 @@
 *  RETURN: animation object illustrating progression of flood fill algorithm
 */
 animation filler::FillBFS(FillerConfig& config) {
-  // complete your implementation below
-  // You should replace the following line with a
-  // correct call to fill.
-  return animation(); // REPLACE THIS STUB
+  return Fill<Queue>(config);
 }
 
 /*
@@ -24,10 +21,7 @@ animation filler::FillBFS(FillerConfig& config) {
 *  RETURN: animation object illustrating progression of flood fill algorithm
 */
 animation filler::FillDFS(FillerConfig& config) {
-  // complete your implementation below
-  // You should replace the following line with a
-  // correct call to fill.
-  return animation(); // REPLACE THIS STUB
+  return Fill<Stack>(config);
 }
 
 /*
@@ -100,11 +94,84 @@ template <template <class T> class OrderingStructure> animation filler::Fill(Fil
   int framecount = 0; // increment after processing one pixel; used for producing animation frames (step 3 above)
   animation anim;
   OrderingStructure<PixelPoint> os;
+  vector<PixelPoint> processedPoints = {};
+  PNG image = config.img;
+  PixelPoint seed = config.seedpoint;
 
-  // complete your implementation below
-  // HINT: you will likely want to declare some kind of structure to track
-  //       which pixels have already been visited
+  os.Add(seed);
   
+  while (!os.IsEmpty()) {
+    // Remove point from os
+    PixelPoint pp = os.Remove();
 
+    // Add unprocessed neighbors
+    if (is_unprocessed(processedPoints, pp)) {
+      processedPoints.push_back(pp);
+
+      // Add above neighbor
+      if (pp.y >= 1) {
+        add_neighbors(0, -1, image, config.seedpoint.color, config.tolerance, pp, config.neighbourorder);
+      }
+
+      // Add below neighbor
+      if (pp.y < image.height()-1) {
+        add_neighbors(0, 1, image, config.seedpoint.color, config.tolerance, pp, config.neighbourorder);
+      }
+
+      // Add left neighbor
+      if (pp.x >= 1) {
+        add_neighbors(-1, 0, image, config.seedpoint.color, config.tolerance, pp, config.neighbourorder);
+      }
+
+      // Add right neighbor
+      if (pp.x < image.width()-1) {
+        add_neighbors(1, 0, image, config.seedpoint.color, config.tolerance, pp, config.neighbourorder);
+      }
+    }
+
+    while (!config.neighbourorder.IsEmpty()) {
+      PixelPoint next = config.neighbourorder.Remove();
+      os.Add(next);
+    }
+
+    // Process PixelPoint
+    flood_pixel(config.picker, pp, image);
+    framecount++;
+
+    // Add a frame to the animation, if appropriate
+    if (framecount % config.frameFreq == 0) {
+      anim.addFrame(image);
+    }
+  }
+
+  anim.addFrame(image);
   return anim;
+}
+
+bool filler::is_unprocessed(vector<PixelPoint> pixelpoints, PixelPoint p) {
+  for (PixelPoint pp : pixelpoints) {
+    if (pp.x == p.x && pp.y == p.y) {
+      return false;
+    }
+  }
+  return true;
+}
+
+void filler::add_neighbors(int dx, int dy, PNG image, HSLAPixel seedColor, double tolerance, PixelPoint p, PriorityNeighbours neighbors) {
+  if (image.getPixel(p.x+dx, p.y+dy)->dist(seedColor) <= tolerance) {
+    PixelPoint res;
+    res.x = p.x+dx;
+    res.y = p.y+dy;
+    res.color = p.color;
+    neighbors.Insert(res);
+  }
+}
+
+void filler::flood_pixel(ColorPicker* picker, PixelPoint p, PNG image) {
+  HSLAPixel flooded = picker->operator()(p);
+  HSLAPixel* original = image.getPixel(p.x, p.y);
+  original->h = flooded.h;
+  original->s = flooded.s;
+  original->l = flooded.l;
+  original->a = flooded.a;
 }
