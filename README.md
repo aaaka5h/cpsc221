@@ -26,3 +26,6 @@ Completed labs and assignments from CPSC 221 Data Structures and Algorithms
 ### Lab_Dict ###
 - Using memoization to optimize recursive functions
 - Implementing various functions to iterate through and manipulate large dictionaries
+
+### Lab_AVL ###
+- Implemented methods for AVL trees
