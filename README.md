@@ -5,6 +5,11 @@ Completed labs and assignments from CPSC 221 Data Structures and Algorithms
 - Developed and used a 2D linked grid to manipulate pixels from a PNG
 - Managed dynamic memory in a large program with complex code
 
+### Programming Assignment 2 ###
+- Used Stacks, queues, and priority queues to flood fill various images
+- Implemented BFS and DFS search with three different fill patterns
+- Utilized functors to change individual pixels on PNGs
+
 ### Lab-Intro: ###
 - Manipulated PNG images using HSLAPixels
 
