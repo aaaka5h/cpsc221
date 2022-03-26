@@ -19,7 +19,7 @@
 // Node* MyHelperFunction(int arg_a, bool arg_b);
 //
 /////////////////////////////////////////////////
-
+HSLAPixel avgColor(PNG& im, pair<unsigned int, unsigned int> ul, unsigned int w, unsigned int h);
 
 
 #endif
