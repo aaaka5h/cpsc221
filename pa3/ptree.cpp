@@ -8,6 +8,7 @@
 
 #include "ptree.h"
 #include "hue_utils.h" // useful functions for calculating hue averages
+#include "ptree-private.h"
 
 using namespace cs221util;
 using namespace std;
@@ -54,8 +55,45 @@ void PTree::Copy(const PTree& other) {
 *  RETURN: pointer to the fully constructed Node
 */
 Node* PTree::BuildNode(PNG& im, pair<unsigned int, unsigned int> ul, unsigned int w, unsigned int h) {
-  // replace the line below with your implementation
-  return nullptr;
+  // Create root
+  HSLAPixel avgClr = avgColor(im, ul, w, h);
+  Node* newNode = new Node(ul, w, h, avgClr);
+
+  int width = w;
+  int height = h;
+
+  // Base case to prevent infinite recursion
+  if (w == 1 && h == 1) {
+    return newNode;
+  }
+  
+  // partition in different ways if height > w or vice versa
+  if (h > w) {
+
+    unsigned int heightA = h / 2;
+    unsigned int heightB = h - heightA;
+
+    // Top left corner of B will be at ul.second + heightA
+    pair<unsigned int, unsigned int> ulB = make_pair(ul.first, (ul.second + heightA));
+
+    // Create A and B nodes
+    newNode->A = BuildNode(im, ul, width, heightA);
+    newNode->B = BuildNode(im, ulB, width, heightB);
+  
+  } else { // If h <= w
+
+    unsigned int widthA = w / 2;
+    unsigned int widthB = w - widthA;
+
+    // Top left corner of B will be at ul.first + widthA
+    pair<unsigned int, unsigned int> ulB = make_pair((ul.first + widthA), height);
+
+    // Recursively create A and B nodes
+    newNode->A = BuildNode(im, ul, widthA, height);
+    newNode->B = BuildNode(im, ulB, widthB, height);
+  }
+
+  return newNode;
 }
 
 ////////////////////////////////
@@ -108,8 +146,8 @@ Node* PTree::BuildNode(PNG& im, pair<unsigned int, unsigned int> ul, unsigned in
 *  POST:  The newly constructed tree contains the PNG's pixel data in each leaf node.
 */
 PTree::PTree(PNG& im) {
-  // add your implementation below
-  
+  pair<unsigned int, unsigned int> topLeft = make_pair(0, 0);
+  root = BuildNode(im, topLeft, im.width(), im.height());
 }
 
 /*
@@ -252,3 +290,36 @@ Node* PTree::GetRoot() {
 // PERSONALLY DEFINED PRIVATE MEMBER FUNCTIONS
 //////////////////////////////////////////////
 
+HSLAPixel PTree::avgColor(PNG& im, pair<unsigned int, unsigned int> ul, unsigned int w, unsigned int h) {
+  double hueAccumX = 0.0;
+  double hueAccumY = 0.0;
+  double hueAccum = 0.0;
+  double satAccum = 0.0;
+  double lumAccum = 0.0;
+  HSLAPixel* orig;
+
+  int endX = ul.first + w;
+  int endY = ul.second + h;
+
+  for (unsigned int x = ul.first; x < endX; x++) {
+    for (unsigned int y = ul.second; y < endY; y++) {
+      orig = im.getPixel(x, y);
+      hueAccumX += Deg2X(orig->h);
+      hueAccumY += Deg2Y(orig->h);
+      satAccum += orig->s;
+      lumAccum += orig->l;
+    }
+  }
+
+  hueAccumX /= (h * w);
+  hueAccumY /= (h * w);
+  hueAccum = XY2Deg(hueAccumX, hueAccumY);
+  lumAccum /= (h * w);
+  satAccum /= (h * w);
+
+  return HSLAPixel(hueAccum, satAccum, lumAccum);
+}
+
+// bool isHeightGreater(unsigned int w, unsigned int h) {
+//   return (h > w);
+// }
