@@ -20,6 +20,14 @@
 //
 /////////////////////////////////////////////////
 HSLAPixel avgColor(PNG& im, pair<unsigned int, unsigned int> ul, unsigned int w, unsigned int h);
+int SizeHelper(Node* subroot) const;
+int NumLeavesHelper(Node* subroot) const;
+Node* CopyHelper(Node* other);
+void clearNode(Node* curr);
+bool nodesEqual(Node * orig, Node * other);
+void RenderHelper(PNG& image, Node* subroot) const;
+void PruneHelper(Node* subroot, double tolerance);
+bool ShouldPrune(HSLAPixel rootAvgColor, Node* subroot, double tolerance);
 
 
 #endif
