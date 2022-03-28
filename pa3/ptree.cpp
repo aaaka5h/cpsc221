@@ -173,15 +173,6 @@ PTree& PTree::operator=(const PTree& other) {
     Clear();
     Copy(other);
   }
-  // if (other.root == nullptr) {
-  //   if (root != nullptr) {
-  //     Clear();
-  //   }
-  //   root = nullptr;
-  // } else if (!nodesEqual(root, other.root)) {
-  //   Clear();
-  //   Copy(other);
-  // }
   return *this;
 }
 
@@ -265,8 +256,7 @@ int PTree::NumLeaves() const {
 *  POST: Tree has been modified so that a rendered PNG will be flipped horizontally.
 */
 void PTree::FlipHorizontal() {
-  // add your implementation below
-  
+  mirrorHorizontal(root);
 }
 
 /*
@@ -281,8 +271,7 @@ void PTree::FlipHorizontal() {
 *  POST: Tree has been modified so that a rendered PNG will be flipped vertically.
 */
 void PTree::FlipVertical() {
-  // add your implementation below
-  
+  mirrorVertical(root);
 }
 
 /*
@@ -323,8 +312,8 @@ HSLAPixel PTree::avgColor(PNG& im, pair<unsigned int, unsigned int> ul, unsigned
     }
   }
 
-  hueAccumX /= w;
-  hueAccumY /= h;
+  hueAccumX /= (h * w);
+  hueAccumY /= (h * w);
   hueAccum = XY2Deg(hueAccumX, hueAccumY);
   lumAccum /= (h * w);
   satAccum /= (h * w);
@@ -376,19 +365,6 @@ void PTree::clearNode(Node* curr) {
   curr->B = nullptr;
   delete curr;
   curr = nullptr;
-
-  // if (curr.A != nullptr) {
-  //   clearNode(*(curr.A));
-  // }
-  // if (curr.B != nullptr) {
-  //   clearNode(*(curr.B));
-  // }
-  // if (curr.A != nullptr) {
-  //   delete(curr.A);
-  // }
-  // if (curr.B != nullptr) {
-  //   delete(curr.B);
-  // }
 }
 
 // Helper function for operator=()
@@ -461,4 +437,95 @@ bool PTree::ShouldPrune(HSLAPixel rootAvgColor, Node* subroot, double tolerance)
   } else {
     return ShouldPrune(rootAvgColor, subroot->A, tolerance) && ShouldPrune(rootAvgColor, subroot->B, tolerance);
   }
+}
+
+
+/*
+*  Rearranges the nodes in the tree, such that a rendered PNG will be flipped horizontally
+*  (i.e. mirrored over a vertical axis).
+*  This can be achieved by manipulation of the nodes' member attribute(s).
+*  Note that this may possibly be executed on a pruned tree.
+*  This function should run in time linearly proportional to the size of the tree.
+*
+*  You may want to add a recursive helper function for this!
+*  This is the helper
+*
+*  POST: Tree has been modified so that a rendered PNG will be flipped horizontally.
+*  +-------+-------+-------+
+*  |   A   |   C   |   E   |
+*  |       |       |       |
+*  +-------+-------+-------+
+*  |   B   |   D   |   F   |
+*  |       |       |       |
+*  +-------+-------+-------+
+*    ---->
+*  +-------+-------+-------+
+*  |   E   |   C   |   A   |
+*  |       |       |       |
+*  +-------+-------+-------+
+*  |   F   |   D   |   B   |
+*  |       |       |       |
+*  +-------+-------+-------+
+* 
+*/
+
+
+void PTree::mirrorHorizontal(Node * subRoot) {
+  if (!subRoot) return;
+
+  subRoot->upperleft.first = root->width - subRoot->upperleft.first - subRoot->width;
+  // subRoot->B->upperleft.first = root->width - subRoot->B->upperleft.first - subRoot->width;
+  // subRoot->B->upperleft.first = subRoot->A->upperleft.first;
+  // subRoot->A->upperleft.first = subRoot->A->upperleft.first + subRoot->B->width;
+    
+  Node* temp;
+  temp = subRoot->A;
+  subRoot->A = subRoot->B;
+  subRoot->B = temp;
+    
+  mirrorHorizontal(subRoot->A);
+  mirrorHorizontal(subRoot->B);
+}
+
+/*
+*  Rearranges the nodes in the tree, such that a rendered PNG will be flipped horizontally
+*  (i.e. mirrored over a vertical axis).
+*  This can be achieved by manipulation of the nodes' member attribute(s).
+*  Note that this may possibly be executed on a pruned tree.
+*  This function should run in time linearly proportional to the size of the tree.
+*
+*  You may want to add a recursive helper function for this!
+*
+*  POST: Tree has been modified so that a rendered PNG will be flipped horizontally.
+*  +-------+-------+-------+
+*  |   A   |   C   |   E   |
+*  |       |       |       |
+*  +-------+-------+-------+
+*  |   B   |   D   |   F   |
+*  |       |       |       |
+*  +-------+-------+-------+
+*    ---->
+*  +-------+-------+-------+
+*  |   B   |   D   |   F   |
+*  |       |       |       |
+*  +-------+-------+-------+
+*  |   A   |   C   |   E   |
+*  |       |       |       |
+*  +-------+-------+-------+
+*/
+void PTree::mirrorVertical(Node * subRoot) {
+  if (!subRoot) return;
+
+  subRoot->upperleft.second = root->height - subRoot->upperleft.second - subRoot->height;
+  // subRoot->B->upperleft.first = root->width - subRoot->B->upperleft.first - subRoot->width;
+  // subRoot->B->upperleft.first = subRoot->A->upperleft.first;
+  // subRoot->A->upperleft.first = subRoot->A->upperleft.first + subRoot->B->width;
+    
+  Node* temp;
+  temp = subRoot->A;
+  subRoot->A = subRoot->B;
+  subRoot->B = temp;
+    
+  mirrorVertical(subRoot->A);
+  mirrorVertical(subRoot->B);
 }
