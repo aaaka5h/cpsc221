@@ -28,6 +28,8 @@ bool nodesEqual(Node * orig, Node * other);
 void RenderHelper(PNG& image, Node* subroot) const;
 void PruneHelper(Node* subroot, double tolerance);
 bool ShouldPrune(HSLAPixel rootAvgColor, Node* subroot, double tolerance);
+void mirrorHorizontal(Node* subRoot);
+void mirrorVertical(Node* subRoot);
 
 
 #endif
