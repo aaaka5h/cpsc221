@@ -41,7 +41,7 @@ void PTree::Clear() {
 *  POST:  This PTree is a physically separate copy of the other PTree.
 */
 void PTree::Copy(const PTree& other) {
-  root = CopyHelper(root, other.root);
+  root = CopyHelper(other.root);
 }
 
 /*
@@ -346,24 +346,24 @@ int PTree::NumLeavesHelper(Node* subroot) const {
 }
 
 // Helper function for Copy()
-Node* PTree::CopyHelper(Node* curr, Node* other) {
-  if (other) {
-    curr = new Node;
-    curr->avg = other->avg;
-    curr->height = other->height;
-    curr->width = other->height;
-    curr->upperleft = other->upperleft;
+Node* PTree::CopyHelper(Node* other) {
+  // Create pointer to copied node (identical to other)
+  Node* copied = new Node();
+  copied->upperleft = make_pair(other->upperleft.first, other->upperleft.second);
+  copied->width = other->width;
+  copied->height = other->height;
+  copied->avg = other->avg;
 
-    if (other->A) {
-      curr->A = CopyHelper(curr->A, other->A); 
-    } 
-
-    if (other->B) {
-      curr->B = CopyHelper(curr->B, other->B);
-    } 
+  if (other->A && other->B) {
+    copied->A = CopyHelper(other->A);
+    copied->B = CopyHelper(other->B);
+  } else {
+    copied->A = nullptr;
+    copied->B = nullptr;
   }
 
-  return curr;
+  root = copied;
+  return root;
 }
 
 // Helper function for Clear()
