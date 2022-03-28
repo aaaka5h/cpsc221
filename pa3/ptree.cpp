@@ -27,7 +27,9 @@ typedef pair<unsigned int, unsigned int> pairUI;
 */
 void PTree::Clear() {
   // add your implementation below
-  
+  if (root != NULL) {
+    clearNode(root);
+  }
 }
 
 /*
@@ -39,8 +41,7 @@ void PTree::Clear() {
 *  POST:  This PTree is a physically separate copy of the other PTree.
 */
 void PTree::Copy(const PTree& other) {
-  // add your implementation below
-  
+  root = CopyHelper(root, other.root);
 }
 
 /*
@@ -57,42 +58,38 @@ void PTree::Copy(const PTree& other) {
 Node* PTree::BuildNode(PNG& im, pair<unsigned int, unsigned int> ul, unsigned int w, unsigned int h) {
   // Create root
   HSLAPixel avgClr = avgColor(im, ul, w, h);
-  Node* newNode = new Node(ul, w, h, avgClr);
+  Node* newNode = new Node(ul, w, h, avgClr, nullptr, nullptr);
 
-  int width = w;
-  int height = h;
+  // Temporary width and height variables
+  int widthA, heightA;
 
   // Base case to prevent infinite recursion
-  if (w == 1 && h == 1) {
-    return newNode;
-  }
-  
-  // partition in different ways if height > w or vice versa
+  if (w == 1 && h == 1) return newNode;
+
+  // Partition in different ways if height is greater than or less than
   if (h > w) {
-
-    unsigned int heightA = h / 2;
-    unsigned int heightB = h - heightA;
-
-    // Top left corner of B will be at ul.second + heightA
-    pair<unsigned int, unsigned int> ulB = make_pair(ul.first, (ul.second + heightA));
-
-    // Create A and B nodes
-    newNode->A = BuildNode(im, ul, width, heightA);
-    newNode->B = BuildNode(im, ulB, width, heightB);
-  
-  } else { // If h <= w
-
-    unsigned int widthA = w / 2;
-    unsigned int widthB = w - widthA;
-
-    // Top left corner of B will be at ul.first + widthA
-    pair<unsigned int, unsigned int> ulB = make_pair((ul.first + widthA), height);
-
-    // Recursively create A and B nodes
-    newNode->A = BuildNode(im, ul, widthA, height);
-    newNode->B = BuildNode(im, ulB, widthB, height);
+    // Build tall node
+      if (h%2 == 1) {
+        heightA = (h-1)/2;
+        newNode->A = BuildNode(im, ul, w, heightA);
+        newNode->B = BuildNode(im, make_pair(ul.first, (ul.second + heightA)), w, (heightA + 1));
+      } else {
+        heightA = h/2;
+        newNode->A = BuildNode(im, ul, w, heightA);
+        newNode->B = BuildNode(im, make_pair(ul.first, (ul.second + heightA)), w, heightA);
+      }
+  } else {
+    // Build wide node
+    if (w%2 == 1) {
+        widthA = (w-1)/2;
+        newNode->A = BuildNode(im, ul, widthA, h);
+        newNode->B = BuildNode(im, make_pair((ul.first + widthA), ul.second), (widthA+1), h);
+      } else {
+        widthA = w/2;
+        newNode->A = BuildNode(im, ul, widthA, h);
+        newNode->B = BuildNode(im, make_pair((ul.first + widthA), ul.second), widthA, h);
+      }
   }
-
   return newNode;
 }
 
@@ -158,8 +155,7 @@ PTree::PTree(PNG& im) {
 *  POST:  This tree is constructed as a physically separate copy of other tree.
 */
 PTree::PTree(const PTree& other) {
-  // add your implementation below
-  
+  Copy(other);
 }
 
 /*
@@ -173,8 +169,19 @@ PTree::PTree(const PTree& other) {
 *         Otherwise, there is no change to this tree.
 */
 PTree& PTree::operator=(const PTree& other) {
-  // add your implementation below
-
+  if (this != &other) {
+    Clear();
+    Copy(other);
+  }
+  // if (other.root == nullptr) {
+  //   if (root != nullptr) {
+  //     Clear();
+  //   }
+  //   root = nullptr;
+  // } else if (!nodesEqual(root, other.root)) {
+  //   Clear();
+  //   Copy(other);
+  // }
   return *this;
 }
 
@@ -183,8 +190,7 @@ PTree& PTree::operator=(const PTree& other) {
 *  Deallocates all dynamic memory associated with the tree and destroys this PTree object.
 */
 PTree::~PTree() {
-  // add your implementation below
-  
+  Clear();
 }
 
 /*
@@ -199,8 +205,12 @@ PTree::~PTree() {
 *  RETURN: A PNG image of appropriate dimensions and coloured using the tree's leaf node colour data
 */
 PNG PTree::Render() const {
-  // replace the line below with your implementation
-  return PNG();
+  // Render PNG for non-pruned tree
+  PNG img = PNG(root->width, root->height);
+
+  // Call helper to colour PNG
+  RenderHelper(img, root);
+  return img;
 }
 
 /*
@@ -220,8 +230,7 @@ PNG PTree::Render() const {
 *        Each pruned subtree's root becomes a leaf node.
 */
 void PTree::Prune(double tolerance) {
-  // add your implementation below
-  
+  PruneHelper(root, tolerance); 
 }
 
 /*
@@ -231,8 +240,7 @@ void PTree::Prune(double tolerance) {
 *  You may want to add a recursive helper function for this!
 */
 int PTree::Size() const {
-  // replace the line below with your implementation
-  return -1;
+  return (root == nullptr) ? -1 : SizeHelper(root);
 }
 
 /*
@@ -242,8 +250,7 @@ int PTree::Size() const {
 *  You may want to add a recursive helper function for this!
 */
 int PTree::NumLeaves() const {
-  // replace the line below with your implementation
-  return -1;
+  return (root == nullptr) ? -1 : NumLeavesHelper(root);
 }
 
 /*
@@ -290,6 +297,8 @@ Node* PTree::GetRoot() {
 // PERSONALLY DEFINED PRIVATE MEMBER FUNCTIONS
 //////////////////////////////////////////////
 
+
+// Computes Average Color
 HSLAPixel PTree::avgColor(PNG& im, pair<unsigned int, unsigned int> ul, unsigned int w, unsigned int h) {
   double hueAccumX = 0.0;
   double hueAccumY = 0.0;
@@ -298,11 +307,14 @@ HSLAPixel PTree::avgColor(PNG& im, pair<unsigned int, unsigned int> ul, unsigned
   double lumAccum = 0.0;
   HSLAPixel* orig;
 
-  int endX = ul.first + w;
-  int endY = ul.second + h;
+  unsigned int endX = ul.first + w;
+  unsigned int endY = ul.second + h;
 
   for (unsigned int x = ul.first; x < endX; x++) {
     for (unsigned int y = ul.second; y < endY; y++) {
+      if (x == im.width() || y == im.height()) {
+        break;
+      }
       orig = im.getPixel(x, y);
       hueAccumX += Deg2X(orig->h);
       hueAccumY += Deg2Y(orig->h);
@@ -311,8 +323,8 @@ HSLAPixel PTree::avgColor(PNG& im, pair<unsigned int, unsigned int> ul, unsigned
     }
   }
 
-  hueAccumX /= (h * w);
-  hueAccumY /= (h * w);
+  hueAccumX /= w;
+  hueAccumY /= h;
   hueAccum = XY2Deg(hueAccumX, hueAccumY);
   lumAccum /= (h * w);
   satAccum /= (h * w);
@@ -320,6 +332,133 @@ HSLAPixel PTree::avgColor(PNG& im, pair<unsigned int, unsigned int> ul, unsigned
   return HSLAPixel(hueAccum, satAccum, lumAccum);
 }
 
-// bool isHeightGreater(unsigned int w, unsigned int h) {
-//   return (h > w);
-// }
+// Helper function for Size()
+int PTree::SizeHelper(Node* subroot) const {
+  if (subroot == NULL) return 0;
+  return (SizeHelper(subroot->A) + 1 + SizeHelper(subroot->B));
+}
+
+// Helper function for NumLeaves()
+int PTree::NumLeavesHelper(Node* subroot) const {
+  if (subroot->A == NULL) return 1;
+  if (subroot->B == NULL) return 1;
+  return (NumLeavesHelper(subroot->A) + NumLeavesHelper(subroot->B));
+}
+
+// Helper function for Copy()
+Node* PTree::CopyHelper(Node* curr, Node* other) {
+  if (other) {
+    curr = new Node;
+    curr->avg = other->avg;
+    curr->height = other->height;
+    curr->width = other->height;
+    curr->upperleft = other->upperleft;
+
+    if (other->A) {
+      curr->A = CopyHelper(curr->A, other->A); 
+    } 
+
+    if (other->B) {
+      curr->B = CopyHelper(curr->B, other->B);
+    } 
+  }
+
+  return curr;
+}
+
+// Helper function for Clear()
+void PTree::clearNode(Node* curr) {
+  if (!curr) return;
+
+  clearNode(curr->A);
+  clearNode(curr->B);
+  curr->A = nullptr;
+  curr->B = nullptr;
+  delete curr;
+  curr = nullptr;
+
+  // if (curr.A != nullptr) {
+  //   clearNode(*(curr.A));
+  // }
+  // if (curr.B != nullptr) {
+  //   clearNode(*(curr.B));
+  // }
+  // if (curr.A != nullptr) {
+  //   delete(curr.A);
+  // }
+  // if (curr.B != nullptr) {
+  //   delete(curr.B);
+  // }
+}
+
+// Helper function for operator=()
+bool PTree::nodesEqual(Node * orig, Node * other) {
+  if (orig == NULL && other == NULL) {
+    return true;
+  }
+
+  if (orig->height == other->height && orig->width == other->width && orig->avg == other->avg) {
+    return (nodesEqual(orig->A, other->A) && nodesEqual(orig->A, other->B));
+  } else  {
+    return false;
+  }
+}
+
+// Helper function for Render()
+void PTree::RenderHelper(PNG& image, Node* subroot) const {
+  // Base case to prevent infinite recursion
+  if (!subroot) return;
+
+  for (unsigned int x = 0; x < subroot->width; x++) {
+    for (unsigned int y = 0; y < subroot->height; y++) {
+      HSLAPixel* toFill = image.getPixel(subroot->upperleft.first + x, subroot->upperleft.second + y);
+      *toFill = subroot->avg;
+    }
+  }
+
+  // Recursively call on subnodes
+  RenderHelper(image, subroot->A);
+  RenderHelper(image, subroot->B);
+}
+
+/*
+*  Trims subtrees as high as possible in the tree. A subtree is pruned
+*  (its children are cleared/deallocated) if ALL of its leaves have colour
+*  within tolerance of the subtree root's average colour.
+*  Pruning criteria should be evaluated on the original tree, and never on a pruned
+*  tree (i.e. we expect that Prune would be called on any tree at most once).
+*  When processing a subtree, you should determine if the subtree should be pruned,
+*  and prune it if possible before determining if it has subtrees that can be pruned.
+* 
+*  You may want to add (a) recursive helper function(s) for this!
+*
+*  PRE:  This tree has not been previously pruned (and is not copied/assigned from a tree that has been pruned)
+*  POST: Any subtrees (as close to the root as possible) whose leaves all have colour
+*        within tolerance from the subtree's root colour will have their children deallocated;
+*        Each pruned subtree's root becomes a leaf node.
+*/
+void PTree::PruneHelper(Node* subroot, double tolerance) {
+  // Base case prevents infinite recursion
+  if (!subroot) return;
+
+  // Determine if pruning should occur
+  if (ShouldPrune(subroot->avg, subroot, tolerance)) {
+    clearNode(subroot->A);
+    clearNode(subroot->B);
+    subroot->A = nullptr;
+    subroot->B = nullptr;
+  } else {
+    PruneHelper(subroot->A, tolerance);
+    PruneHelper(subroot->B, tolerance);
+  }
+}
+
+bool PTree::ShouldPrune(HSLAPixel rootAvgColor, Node* subroot, double tolerance) {
+  if (!subroot) return true;
+
+  if (!subroot->A && !subroot->B) {
+    return rootAvgColor.dist(subroot->avg) <= tolerance;
+  } else {
+    return ShouldPrune(rootAvgColor, subroot->A, tolerance) && ShouldPrune(rootAvgColor, subroot->B, tolerance);
+  }
+}
