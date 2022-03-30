@@ -52,3 +52,8 @@ Completed labs and assignments from CPSC 221 Data Structures and Algorithms
 
 ### Lab_AVL ###
 - Implemented methods for AVL trees
+
+### Lab Hash ###
+- Utilized hash tables and iterators to discover information from large dictionaries
+- Implemented functions using a seperate chaining hash table
+- Implemented functions using a linear probing hash table
