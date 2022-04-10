@@ -28,21 +28,21 @@ Completed labs and assignments from CPSC 221 Data Structures and Algorithms
   <img src="pa_images/pa3-pruned.png" width="300" />
 </p>
 
-### Lab-Intro: ###
+### Lab_Intro: ###
 - Manipulated PNG images using HSLAPixels
 
-### Lab-Debug: ###
+### Lab_Debug: ###
 - Found and fixed bugs in sketchify.cpp (a program to trace the outline of a PNG)
 - Used gdb to debug
 
-### Lab-LinkedLists: ###
+### Lab_LinkedLists: ###
 - Implemented linked list methods
 
-### Lab-Quacks ###
+### Lab_Quacks ###
 - Practiced creating recursive functions
 - Created recursive and iterative functions to manipulate stacks and queues
 
-### Lab-Trees ###
+### Lab_Trees ###
 - Manipulated binary trees
 - Utilized InOrder, PreOrder, and PostOrder traversals
 
@@ -53,7 +53,15 @@ Completed labs and assignments from CPSC 221 Data Structures and Algorithms
 ### Lab_AVL ###
 - Implemented methods for AVL trees
 
-### Lab Hash ###
+### Lab_Hash ###
 - Utilized hash tables and iterators to discover information from large dictionaries
 - Implemented functions using a seperate chaining hash table
 - Implemented functions using a linear probing hash table
+
+### Lab_Heaps ###
+- Implemented a heap class
+- Implemented efficient traversal methods
+
+### Lab_Graphs ###
+- Used BFS to find the minimum weighted edge of a graph
+- Used BFS to find the shortest path between two vertices of a graph
